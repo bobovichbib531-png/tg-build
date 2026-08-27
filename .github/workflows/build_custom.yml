@@ -138,7 +138,7 @@ jobs:
 
       - name: Upload artifact.
         if: env.UPLOAD_ARTIFACT == 'true'
-        uses: actions/upload-artifact@v4.6.2
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: Telegram-x64-custom
           path: artifact\
