@@ -9,6 +9,7 @@ on:
 
 jobs:
   Copyright-year:
+    if: false
     runs-on: ubuntu-slim
     steps:
       - uses: desktop-app/action_code_updater@master

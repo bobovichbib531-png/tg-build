@@ -1,0 +1,41 @@
+version: '{build}'
+
+image: Visual Studio 2022
+
+branches:
+  only:
+    - dev
+
+environment:
+  TBUILD: C:\TBuild
+  LibrariesPath: C:\TBuild\Libraries\win64
+  REPO_NAME: tg-build
+
+cache:
+  - C:\TBuild\ThirdParty -> Telegram\build\prepare\prepare.py
+  - C:\TBuild\Libraries\win64 -> Telegram\build\prepare\prepare.py
+
+install:
+  - cmd: mkdir C:\TBuild\Libraries
+  - cmd: mklink /d "%APPVEYOR_BUILD_FOLDER%\TBuild" C:\TBuild
+  - cmd: set PATH=%PATH:C:\Program Files\Git\bin;=%
+  - cmd: set PATH=%PATH:C:\Program Files\Git\usr\bin;=%
+  - cmd: call "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat"
+  - cmd: nuget sources Disable -Name "Microsoft Visual Studio Offline Packages"
+  - cmd: nuget sources Add -Source https://api.nuget.org/v3/index.json & exit 0
+  - cmd: for /r "%PROGRAMFILES%\CMake\share" %%f in (Windows-MSVC.cmake) do powershell -Command "(Get-Content '%%f') -replace '\$\{_Zi\}', '' | Set-Content '%%f'"
+  - cmd: call "%APPVEYOR_BUILD_FOLDER%\Telegram\build\prepare\win.bat" skip-release silent
+
+build_script:
+  - cmd: cd "%APPVEYOR_BUILD_FOLDER%\Telegram"
+  - cmd: call configure.bat x64 -D TDESKTOP_API_ID=611335 -D TDESKTOP_API_HASH=d524b414d21f4d37f08684c1df41ac9c -D CMAKE_CONFIGURATION_TYPES=Debug -D CMAKE_COMPILE_WARNING_AS_ERROR=ON -D CMAKE_MSVC_DEBUG_INFORMATION_FORMAT= -D DESKTOP_APP_DISABLE_AUTOUPDATE=ON -D DESKTOP_APP_DISABLE_CRASH_REPORTS=ON
+  - cmd: cmake --build ..\out --config Debug --parallel
+
+after_build:
+  - cmd: mkdir artifact
+  - cmd: move "%APPVEYOR_BUILD_FOLDER%\out\Debug\Telegram.exe" artifact\
+  - cmd: move "%APPVEYOR_BUILD_FOLDER%\out\Debug\Updater.exe" artifact\ & exit 0
+
+artifacts:
+  - path: artifact\*
+    name: Telegram-x64-custom
